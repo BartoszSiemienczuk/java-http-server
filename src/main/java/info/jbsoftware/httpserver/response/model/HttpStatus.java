@@ -1,4 +1,4 @@
-package info.jbsoftware.httpserver.response;
+package info.jbsoftware.httpserver.response.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,11 +23,11 @@ public enum HttpStatus {
     SERVICE_UNAVAILABLE(503, "Service Unavailable");
 
     private final int code;
-    private final String description;
+    private final String reason;
 
     @Override
     public String toString() {
-        return code + " " + description;
+        return code + " " + reason;
     }
 
     public static HttpStatus fromCode(int code) {
@@ -41,6 +41,6 @@ public enum HttpStatus {
 
     public String toStatusLine() {
         //TODO add HTTP version
-        return "HTTP/1.1 " + code + " " + description + "\r\n";
+        return "HTTP/1.1 " + code + " " + reason + "\r\n";
     }
 }

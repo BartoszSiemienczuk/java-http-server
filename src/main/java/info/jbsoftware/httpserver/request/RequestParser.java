@@ -10,19 +10,7 @@ import java.io.InputStreamReader;
 public class RequestParser {
 
     public HttpRequest parse(final InputStream inputStream) throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-
-        // Read the request line
-        final String requestLine = reader.readLine();
-        if (requestLine == null || requestLine.isEmpty()) {
-            throw new IOException("Invalid request line");
-        }
-
-        // Split the request line into method and path
-        final String[] requestLineParts = requestLine.split(" ");
-        if (requestLineParts.length < 2) {
-            throw new IOException("Invalid request line format");
-        }
+        final String[] requestLineParts = getLines(inputStream);
         final String method = requestLineParts[0];
         final String path = requestLineParts[1];
 
@@ -44,5 +32,22 @@ public class RequestParser {
 
         // Build and return the HttpRequest object
         return new HttpRequest(method, path, "");
+    }
+
+    private String[] getLines(final InputStream inputStream) throws IOException {
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+        // Read the request line
+        final String requestLine = reader.readLine();
+        if (requestLine == null || requestLine.isEmpty()) {
+            throw new IOException("Invalid request line");
+        }
+
+        // Split the request line into method and path
+        final String[] requestLineParts = requestLine.split(" ");
+        if (requestLineParts.length < 2) {
+            throw new IOException("Invalid request line format");
+        }
+        return requestLineParts;
     }
 }
