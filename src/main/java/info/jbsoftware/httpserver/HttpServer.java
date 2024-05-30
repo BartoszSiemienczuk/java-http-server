@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Builder
 @RequiredArgsConstructor
@@ -26,14 +28,29 @@ public class HttpServer {
     private final HttpResponseByteWriter writer = new HttpResponseByteWriter();
     private final EchoController echoController = new EchoController();
     private final UserAgentController userAgentController = new UserAgentController();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(32);
 
     public void startListening() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             serverSocket.setReuseAddress(true);
             while (true) {
-                try (Socket clientSocket = serverSocket.accept()) {
-                    handleRequest(clientSocket);
-                }
+                Socket clientSocket = serverSocket.accept();
+                executorService.submit(() -> {
+                    try {
+                        handleRequest(clientSocket);
+                    } catch (IOException e) {
+                        log.error("Error", e);
+                        throw new RuntimeException(e);
+                    } finally {
+                        try {
+                            if (!clientSocket.isClosed()) {
+                                clientSocket.close();
+                            }
+                        } catch (IOException e) {
+                            log.error("Error closing socket.", e);
+                        }
+                    }
+                });
             }
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
