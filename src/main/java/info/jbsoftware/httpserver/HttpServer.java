@@ -76,7 +76,7 @@ public class HttpServer {
             case "" -> HttpResponseFactory.ok();
             case "echo" -> echoController.echo(request);
             case "user-agent" -> userAgentController.userAgentEndpoint(request);
-            case "files" -> filesController.serveFiles(request);
+            case "files" -> filesController.filesEndpoint(request);
             default -> HttpResponseFactory.notFound();
         };
         clientOutput.write(writer.writeBytes(response));

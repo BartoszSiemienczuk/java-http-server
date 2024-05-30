@@ -3,6 +3,8 @@ package info.jbsoftware.httpserver.response;
 import info.jbsoftware.httpserver.response.model.HttpResponse;
 import info.jbsoftware.httpserver.response.model.HttpStatus;
 
+import java.util.List;
+
 public class HttpResponseFactory {
     public static HttpResponse ok() {
         return new HttpResponse(HttpStatus.OK, HeadersFactory.text(null), null);
@@ -12,6 +14,9 @@ public class HttpResponseFactory {
         return new HttpResponse(HttpStatus.OK, HeadersFactory.text(body), body);
     }
 
+    public static HttpResponse created() {
+        return new HttpResponse(HttpStatus.CREATED, List.of(), null);
+    }
 
     public static HttpResponse okBytes(final byte[] body, final String contentType) {
         return new HttpResponse(HttpStatus.OK, HeadersFactory.bytes(body, contentType), new String(body));

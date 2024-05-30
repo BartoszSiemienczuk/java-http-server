@@ -10,8 +10,12 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length > 1) {
-            log.debug("Setting file path to: {}", args[1]);
-            FileUtils.FILE_PATH = args[1];
+            String basePath = args[1];
+            if (!basePath.endsWith("/")) {
+                basePath += "/";
+            }
+            log.debug("Setting file path to: {}", basePath);
+            FileUtils.FILE_PATH = basePath;
         }
         final HttpServer server = new HttpServer(PORT);
         server.startListening();

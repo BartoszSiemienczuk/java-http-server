@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import static info.jbsoftware.httpserver.common.HttpHeaderKey.CONTENT_LENGTH;
+
 public class RequestParser {
 
     public HttpRequest parse(final InputStream inputStream) throws IOException {
@@ -21,28 +23,14 @@ public class RequestParser {
         final String path = requestLineParts[1];
 
         // Iterate to skip headers (until an empty line is found)
-        String line;
-        final List<HttpHeader> headers = new ArrayList<>();
-        while ((line = reader.readLine()) != null && !line.trim().isEmpty()) {
-            final String[] headerParts = line.split(":");
-            if (headerParts.length < 2) {
-                throw new IOException("Invalid header line");
-            }
-            headers.add(new HttpHeader(headerParts[0].trim(), headerParts[1].trim()));
-        }
+        final List<HttpHeader> headers = headers(reader);
 
         // Read the body, if there's any
-//        final StringBuilder bodyBuilder = new StringBuilder();
-//        while ((line = reader.readLine()) != null) {
-//            if (line.trim().isEmpty()) {
-//                break;
-//            }
-//            bodyBuilder.append(line).append(System.lineSeparator());
-//        }
-//        final String body = bodyBuilder.toString().trim();
+        final int contentLength = findContentLength(headers);
+        final String body = body(reader, contentLength);
 
         // Build and return the HttpRequest object
-        return new HttpRequest(method, path, headers, StringUtils.EMPTY);
+        return new HttpRequest(method, path, headers, body);
     }
 
     private String[] getRequestLineParts(final BufferedReader reader) throws IOException {
@@ -58,5 +46,37 @@ public class RequestParser {
             throw new IOException("Invalid request line");
         }
         return requestLineParts;
+    }
+
+    private List<HttpHeader> headers(final BufferedReader reader) throws IOException {
+        String line;
+        final List<HttpHeader> headers = new ArrayList<>();
+        while ((line = reader.readLine()) != null && !line.trim().isEmpty()) {
+            final String[] headerParts = line.split(":");
+            if (headerParts.length < 2) {
+                throw new IOException("Invalid header line");
+            }
+            headers.add(new HttpHeader(headerParts[0].trim(), headerParts[1].trim()));
+        }
+        return headers;
+    }
+
+    private int findContentLength(final List<HttpHeader> headers) {
+        return headers.stream()
+                .filter(header -> CONTENT_LENGTH.getKey().equalsIgnoreCase(header.key()))
+                .map(header -> Integer.parseInt(header.value()))
+                .findFirst()
+                .orElse(-1);
+
+    }
+
+    private String body(final BufferedReader reader, final int contentLength) throws IOException {
+        if (contentLength <= 0) {
+            return ""; // No body
+        }
+
+        char[] charBuffer = new char[contentLength];
+        int bytesRead = reader.read(charBuffer, 0, contentLength);
+        return new String(charBuffer, 0, bytesRead);
     }
 }
