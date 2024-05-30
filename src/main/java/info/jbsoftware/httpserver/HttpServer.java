@@ -30,26 +30,32 @@ public class HttpServer {
     public void startListening() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             serverSocket.setReuseAddress(true);
-            try (Socket clientSocket = serverSocket.accept()) {
-                log.debug("accepted new connection from {}", clientSocket.getInetAddress().getHostAddress());
-                final InputStream clientInput = clientSocket.getInputStream();
-                final OutputStream clientOutput = clientSocket.getOutputStream();
-                final HttpRequest request = parser.parse(clientInput);
-                log.debug("parsed request");
-                final String path = request.path();
-                final String[] split = path.split("/");
-                final String resource = split.length > 1 ? split[1] : "";
-                final HttpResponse response = switch (resource) {
-                    case "" -> HttpResponseFactory.ok();
-                    case "echo" -> echoController.echo(request);
-                    case "user-agent" -> userAgentController.userAgentEndpoint(request);
-                    default -> HttpResponseFactory.notFound();
-                };
-                clientOutput.write(writer.writeBytes(response));
-                log.debug("Written response bytes");
+            while (true) {
+                try (Socket clientSocket = serverSocket.accept()) {
+                    handleRequest(clientSocket);
+                }
             }
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
         }
+    }
+
+    private void handleRequest(final Socket clientSocket) throws IOException {
+        log.debug("accepted new connection from {}", clientSocket.getInetAddress().getHostAddress());
+        final InputStream clientInput = clientSocket.getInputStream();
+        final OutputStream clientOutput = clientSocket.getOutputStream();
+        final HttpRequest request = parser.parse(clientInput);
+        log.debug("parsed request");
+        final String path = request.path();
+        final String[] split = path.split("/");
+        final String resource = split.length > 1 ? split[1] : "";
+        final HttpResponse response = switch (resource) {
+            case "" -> HttpResponseFactory.ok();
+            case "echo" -> echoController.echo(request);
+            case "user-agent" -> userAgentController.userAgentEndpoint(request);
+            default -> HttpResponseFactory.notFound();
+        };
+        clientOutput.write(writer.writeBytes(response));
+        log.debug("Written response bytes");
     }
 }
