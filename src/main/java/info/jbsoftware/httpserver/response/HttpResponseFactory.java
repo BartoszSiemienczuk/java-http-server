@@ -12,7 +12,16 @@ public class HttpResponseFactory {
         return new HttpResponse(HttpStatus.OK, HeadersFactory.text(body), body);
     }
 
+
+    public static HttpResponse okBytes(final byte[] body, final String contentType) {
+        return new HttpResponse(HttpStatus.OK, HeadersFactory.bytes(body, contentType), new String(body));
+    }
+
     public static HttpResponse notFound() {
         return new HttpResponse(HttpStatus.NOT_FOUND, HeadersFactory.text(null), null);
+    }
+
+    public static HttpResponse error(final String message) {
+        return new HttpResponse(HttpStatus.INTERNAL_SERVER_ERROR, HeadersFactory.text(message), message);
     }
 }

@@ -1,6 +1,7 @@
 package info.jbsoftware.httpserver;
 
 import info.jbsoftware.controllers.EchoController;
+import info.jbsoftware.controllers.FilesController;
 import info.jbsoftware.controllers.UserAgentController;
 import info.jbsoftware.httpserver.request.RequestParser;
 import info.jbsoftware.httpserver.request.model.HttpRequest;
@@ -28,6 +29,7 @@ public class HttpServer {
     private final HttpResponseByteWriter writer = new HttpResponseByteWriter();
     private final EchoController echoController = new EchoController();
     private final UserAgentController userAgentController = new UserAgentController();
+    private final FilesController filesController = new FilesController();
     private final ExecutorService executorService = Executors.newFixedThreadPool(32);
 
     public void startListening() {
@@ -35,26 +37,30 @@ public class HttpServer {
             serverSocket.setReuseAddress(true);
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                executorService.submit(() -> {
-                    try {
-                        handleRequest(clientSocket);
-                    } catch (IOException e) {
-                        log.error("Error", e);
-                        throw new RuntimeException(e);
-                    } finally {
-                        try {
-                            if (!clientSocket.isClosed()) {
-                                clientSocket.close();
-                            }
-                        } catch (IOException e) {
-                            log.error("Error closing socket.", e);
-                        }
-                    }
-                });
+                executorService.submit(handler(clientSocket));
             }
         } catch (IOException e) {
             log.error("IOException: {}", e.getMessage());
         }
+    }
+
+    private Runnable handler(final Socket clientSocket) {
+        return () -> {
+            try {
+                handleRequest(clientSocket);
+            } catch (IOException e) {
+                log.error("Error", e);
+                throw new RuntimeException(e);
+            } finally {
+                try {
+                    if (!clientSocket.isClosed()) {
+                        clientSocket.close();
+                    }
+                } catch (IOException e) {
+                    log.error("Error closing socket.", e);
+                }
+            }
+        };
     }
 
     private void handleRequest(final Socket clientSocket) throws IOException {
@@ -70,6 +76,7 @@ public class HttpServer {
             case "" -> HttpResponseFactory.ok();
             case "echo" -> echoController.echo(request);
             case "user-agent" -> userAgentController.userAgentEndpoint(request);
+            case "files" -> filesController.serveFiles(request);
             default -> HttpResponseFactory.notFound();
         };
         clientOutput.write(writer.writeBytes(response));

@@ -2,23 +2,26 @@ package info.jbsoftware.httpserver.response;
 
 import info.jbsoftware.httpserver.common.HttpHeader;
 import info.jbsoftware.httpserver.common.HttpHeaderKey;
+import info.jbsoftware.httpserver.common.utils.HttpBodyUtils;
 
 import java.util.List;
-import java.util.Optional;
 
 public class HeadersFactory {
     public static List<HttpHeader> text(final String body) {
         return List.of(
                 new HttpHeader(HttpHeaderKey.CONTENT_TYPE.getKey(), "text/plain"),
-                new HttpHeader("Content-Length", contentLength(body))
+                new HttpHeader(HttpHeaderKey.CONTENT_LENGTH.getKey(), contentLength(body))
         );
     }
 
-    private static String contentLength(final String body) {
-        return Optional.ofNullable(body)
-                .map(String::getBytes)
-                .map(bytes -> bytes.length)
-                .map(String::valueOf)
-                .orElse("0");
+    public static List<HttpHeader> bytes(final byte[] body, final String contentType) {
+        return List.of(
+                new HttpHeader(HttpHeaderKey.CONTENT_TYPE.getKey(), contentType),
+                new HttpHeader(HttpHeaderKey.CONTENT_LENGTH.getKey(), String.valueOf(body.length))
+        );
+    }
+
+    public static String contentLength(final String body) {
+        return String.valueOf(HttpBodyUtils.calculateContentLength(body));
     }
 }
