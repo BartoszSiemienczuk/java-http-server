@@ -1,6 +1,7 @@
 package info.jbsoftware.httpserver;
 
 import info.jbsoftware.controllers.EchoController;
+import info.jbsoftware.controllers.UserAgentController;
 import info.jbsoftware.httpserver.request.RequestParser;
 import info.jbsoftware.httpserver.request.model.HttpRequest;
 import info.jbsoftware.httpserver.response.HttpResponseByteWriter;
@@ -24,6 +25,7 @@ public class HttpServer {
     private final RequestParser parser = new RequestParser();
     private final HttpResponseByteWriter writer = new HttpResponseByteWriter();
     private final EchoController echoController = new EchoController();
+    private final UserAgentController userAgentController = new UserAgentController();
 
     public void startListening() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -40,6 +42,7 @@ public class HttpServer {
                 final HttpResponse response = switch (resource) {
                     case "" -> HttpResponseFactory.ok();
                     case "echo" -> echoController.echo(request);
+                    case "user-agent" -> userAgentController.userAgentEndpoint(request);
                     default -> HttpResponseFactory.notFound();
                 };
                 clientOutput.write(writer.writeBytes(response));
